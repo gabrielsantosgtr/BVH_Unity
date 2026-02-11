@@ -2830,8 +2830,9 @@ GameObject:
   m_Component:
   - component: {fileID: 6447977009478076927}
   - component: {fileID: 490347505390900940}
+  - component: {fileID: 1896239266437551666}
   m_Layer: 0
-  m_Name: Wolfboss_A
+  m_Name: Inimigo1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2881,12 +2882,24 @@ MonoBehaviour:
   childNodes:
   - {fileID: 5391386982106118017}
   - {fileID: 4946128554661504180}
-  - {fileID: 5415753037351970012}
-  - {fileID: 8562125051025789196}
   - {fileID: 1349965886246210784}
   - {fileID: 3024682646064849127}
   - {fileID: 1249014051842063802}
+  - {fileID: 5415753037351970012}
+  - {fileID: 8562125051025789196}
   meshLeaf: {fileID: 0}
+--- !u!114 &1896239266437551666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6892521046057106965}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1dbcb04b05155c47a02e7a8d237e708, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6903462658328942768
 GameObject:
   m_ObjectHideFlags: 0

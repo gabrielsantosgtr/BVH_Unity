@@ -1,31 +1,38 @@
 using UnityEngine;
-using System.Diagnostics; // Para o cronômetro (Stopwatch)
+using System.Diagnostics;
 using System.Collections.Generic;
 
 public class ShooterManager : MonoBehaviour
 {
+
     [Header("Referências")]
-    public EnemySpawner spawner; // Arraste o seu Spawner aqui
-    public Camera mainCamera;    // Arraste sua Câmera Principal aqui
+    public EnemySpawner spawner;
+    public Camera mainCamera;
     public float maxDistance = 200f;
 
-    [Header("Debug Visual")]
-    public bool showRayLine = true;
+    public static bool GlobalDebugMode = true;
 
-    // Variáveis para armazenar os dados do relatório
-    private string resultText = "Clique em um inimigo para testar.";
-    private double timeRaw = 0;
-    private double timeBVH = 0;
-    private int hitsDetected = 0;
+    private Texture2D guiBackground;
+    private string resultText = "Clique em um inimigo para testar.\nTAB: Ligar/Desligar Gizmos";
+    private string lastHitPart = "Nenhuma";
 
     void Start()
     {
         if (mainCamera == null) mainCamera = Camera.main;
+
+        guiBackground = new Texture2D(1, 1);
+        guiBackground.SetPixel(0, 0, new Color(0, 0, 0, 0.8f));
+        guiBackground.Apply();
     }
 
-    void Update()
+    void LateUpdate()
     {
-        // Ao clicar com o botão esquerdo
+  
+        if (Input.GetKeyDown(KeyCode.Tab))
+        {
+            GlobalDebugMode = !GlobalDebugMode;
+        }
+
         if (Input.GetMouseButtonDown(0))
         {
             PerformShotComparison();
@@ -34,86 +41,70 @@ public class ShooterManager : MonoBehaviour
 
     void PerformShotComparison()
     {
-        // CRIAÇÃO DO RAIO: Agora baseado na posição do MOUSE
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
 
-        // Visualização do raio na Scene (ajuda no vídeo do trabalho)
-        if (showRayLine)
+        if (GlobalDebugMode)
         {
             UnityEngine.Debug.DrawRay(ray.origin, ray.direction * maxDistance, Color.red, 1.0f);
         }
 
-        List<GameObject> allEnemies = spawner.GetAllEnemies();
+        var allEnemies = spawner.GetAllEnemies();
         
-        // --- MÉTODO 1: SEM BVH (Força bruta na Mesh) ---
-        // Requisito 5 e 19: Comparação a nível de mesh sem otimização
         Stopwatch swRaw = Stopwatch.StartNew();
-        int hitsRaw = 0;
-        
         foreach (var enemy in allEnemies)
         {
-            // Pega TODOS os colliders (inclusive os desativados se houver)
             MeshCollider[] colliders = enemy.GetComponentsInChildren<MeshCollider>();
             foreach (var col in colliders)
             {
-                if (col.Raycast(ray, out RaycastHit hit, maxDistance))
-                {
-                    hitsRaw++;
-                    // Não paramos no primeiro hit para simular o custo de verificar tudo
-                }
+                if (col.Raycast(ray, out RaycastHit hit, maxDistance)) { }
             }
         }
         swRaw.Stop();
-        timeRaw = swRaw.Elapsed.TotalMilliseconds; // Requisito 6 e 20
+        double timeRaw = swRaw.Elapsed.TotalMilliseconds;
+        long ticksRaw = swRaw.ElapsedTicks;
 
-        // --- MÉTODO 2: COM BVH (Otimizado) ---
-        // Requisito 3, 16 e 17: Verifica Raiz -> Filhos -> Mesh
         Stopwatch swBVH = Stopwatch.StartNew();
-        hitsDetected = 0;
-        RaycastHit finalHitInfo = new RaycastHit();
-        bool hitSomething = false;
-
+        int hitsBVH = 0;
+        lastHitPart = "Nenhum (Errou)";
+        
         foreach (var enemy in allEnemies)
         {
             BVHNode rootNode = enemy.GetComponent<BVHNode>();
             
-            // O teste pesado (Mesh) só ocorre se passar pelo CheckHit (Bounds)
             if (rootNode != null && rootNode.CheckHit(ray, out RaycastHit bvhHit, maxDistance))
             {
-                hitsDetected++;
-                finalHitInfo = bvhHit;
-                hitSomething = true;
-                // Aqui poderíamos parar o loop se fosse um jogo real, 
-                // mas para o teste vamos ver se o raio atravessa múltiplos volumes
+                hitsBVH++;
+                lastHitPart = bvhHit.collider.gameObject.name; 
+                
+                if (GlobalDebugMode)
+                {
+                    UnityEngine.Debug.DrawLine(mainCamera.transform.position, bvhHit.point, Color.green, 2.0f);
+                }
+                break; 
             }
         }
         swBVH.Stop();
-        timeBVH = swBVH.Elapsed.TotalMilliseconds; // Requisito 6 e 20
+        double timeBVH = swBVH.Elapsed.TotalMilliseconds;
+        long ticksBVH = swBVH.ElapsedTicks;
 
-        // Feedback visual no objeto atingido (opcional, mas bom para o vídeo)
-        if (hitSomething && finalHitInfo.collider != null)
-        {
-            UnityEngine.Debug.DrawLine(mainCamera.transform.position, finalHitInfo.point, Color.green, 2.0f);
-        }
-
-        // Atualiza o texto da interface
         resultText = $"Último Disparo:\n" +
-                     $"Sem BVH: {timeRaw:F4} ms\n" +
-                     $"Com BVH: {timeBVH:F4} ms\n" +
-                     $"Acertos: {hitsDetected}";
+                     $"Parte: <color=yellow><b>{lastHitPart}</b></color>\n" +
+                     $"-------------------------\n" +
+                     $"Sem BVH: {timeRaw:F4} ms ({ticksRaw:N0} ticks)\n" +
+                     $"Com BVH: {timeBVH:F4} ms ({ticksBVH:N0} ticks)";
                      
         UnityEngine.Debug.Log(resultText);
     }
 
-    // Exibe os resultados na tela (Requisito 28: Comparação de desempenho)
     void OnGUI()
     {
         GUIStyle style = new GUIStyle(GUI.skin.box);
-        style.fontSize = 18;
+        style.fontSize = 20; 
         style.alignment = TextAnchor.UpperLeft;
         style.normal.textColor = Color.white;
+        style.richText = true;
+        style.normal.background = guiBackground;
 
-        // Cria uma caixa no canto superior esquerdo
-        GUI.Box(new Rect(10, 10, 300, 120), resultText, style);
+        GUI.Box(new Rect(10, 10, 400, 160), resultText, style);
     }
 }

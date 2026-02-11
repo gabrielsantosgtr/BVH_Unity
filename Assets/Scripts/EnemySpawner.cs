@@ -5,13 +5,13 @@ public class EnemySpawner : MonoBehaviour
 {
     [Header("Configurações dos Inimigos")]
     [Tooltip("Arraste aqui os 3 prefabs diferentes exigidos.")]
-    public GameObject[] enemyPrefabs; // Atende ao Requisito 8 
-    public int totalToSpawn = 50;     // Atende ao Requisito 9 
+    public GameObject[] enemyPrefabs;
+    public int totalToSpawn = 50;     
 
     [Header("Área de Posicionamento")]
     public Vector3 spawnAreaSize = new Vector3(40, 0, 40);
-    public float minDistanceBetween = 4f; // Distância para evitar sobreposição
-    public int maxAttempts = 15;          // Tentativas antes de desistir de um ponto
+    public float minDistanceBetween = 4f; 
+    public int maxAttempts = 15;          
 
     private List<GameObject> spawnedEnemies = new List<GameObject>();
 
@@ -24,7 +24,7 @@ public class EnemySpawner : MonoBehaviour
     {
         for (int i = 0; i < totalToSpawn; i++)
         {
-            // 1. Escolhe um dos 3 tipos de prefab aleatoriamente
+            
             GameObject prefabToSpawn = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
             
             Vector3 validPosition = GetValidPosition();
@@ -43,21 +43,21 @@ public class EnemySpawner : MonoBehaviour
     {
         for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
-            // Gera uma posição aleatória dentro da área definida
+            
             Vector3 randomPos = new Vector3(
                 Random.Range(-spawnAreaSize.x / 2, spawnAreaSize.x / 2),
-                0, // Ajuste conforme o seu chão
+                0, 
                 Random.Range(-spawnAreaSize.z / 2, spawnAreaSize.z / 2)
             ) + transform.position;
 
-            // Verifica se está longe o suficiente de todos os outros inimigos já criados
+           
             if (IsPositionValid(randomPos))
             {
                 return randomPos;
             }
         }
 
-        return Vector3.zero; // Não encontrou lugar vago após várias tentativas
+        return Vector3.zero; 
     }
 
     bool IsPositionValid(Vector3 pos)
@@ -72,13 +72,13 @@ public class EnemySpawner : MonoBehaviour
         return true;
     }
 
-    // Visualiza a área de spawn no Editor da Unity
+    
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireCube(transform.position, spawnAreaSize);
     }
 
-    // Método útil para o ShooterManager obter a lista de inimigos depois
+   
     public List<GameObject> GetAllEnemies() => spawnedEnemies;
 }
